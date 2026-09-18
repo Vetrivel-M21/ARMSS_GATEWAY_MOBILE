@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/device_auth/device_identity_service.dart';
 import '../../../../core/errors/result.dart';
+import '../../../device_activation/presentation/controllers/device_access_controller.dart';
 import '../../data/portal_auth_repository_impl.dart';
 import '../../domain/entities/portal_session.dart';
 import '../../domain/repositories/portal_auth_repository.dart';
@@ -26,11 +26,14 @@ class PortalSessionController extends AsyncNotifier<PortalSession?> {
     if (token == null) return null;
 
     final result = await ref.read(portalAuthRepositoryProvider).me(token);
-    if (result.isSuccess) return result.valueOrNull;
     if (result.isSuccess) {
       final session = result.valueOrNull;
       if (session != null && session.userId != null && session.userId! > 0) {
-        DeviceIdentityService().registerDeviceOnServer(userId: session.userId);
+        Future.microtask(() {
+          ref
+              .read(deviceAccessControllerProvider.notifier)
+              .autoRegisterDevice(userId: session.userId);
+        });
       }
       return session;
     }
@@ -66,12 +69,12 @@ class PortalSessionController extends AsyncNotifier<PortalSession?> {
     await prefs.setString(_tokenPrefsKey, session.token);
     state = AsyncData(session);
 
-    // Auto-sync: bind this machine's deviceId to the logged-in user on the backend
+    // Auto-sync: automatically register device and activate token on login
     if (session.userId != null && session.userId! > 0) {
       try {
-        await DeviceIdentityService().registerDeviceOnServer(
-          userId: session.userId,
-        );
+        await ref
+            .read(deviceAccessControllerProvider.notifier)
+            .autoRegisterDevice(userId: session.userId);
       } catch (_) {}
     }
 

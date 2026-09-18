@@ -683,86 +683,139 @@ class _PortalUsersAdminScreenState extends ConsumerState<PortalUsersAdminScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PageHeader(
-          title: 'Portal & Device Administration',
-          icon: Icons.admin_panel_settings_outlined,
-          accentColor: const Color(0xFF334155),
-          actions: [
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accentLedger,
-                backgroundColor: AppColors.accentLedgerTint,
-                side: const BorderSide(
-                  color: AppColors.accentLedger,
-                  width: 1.2,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              icon: const Icon(
-                Icons.key_rounded,
-                size: 16,
-                color: AppColors.accentLedger,
-              ),
-              label: const Text(
-                'Installer Password',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: AppColors.accentLedger,
-                ),
-              ),
-              onPressed: _showInstallerPasswordDialog,
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accentLedger,
-                backgroundColor: AppColors.accentLedgerTint,
-                side: const BorderSide(
-                  color: AppColors.accentLedger,
-                  width: 1.2,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              icon: const Icon(
-                Icons.lock_reset_rounded,
-                size: 16,
-                color: AppColors.accentLedger,
-              ),
-              label: const Text(
-                'Admin Password',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: AppColors.accentLedger,
-                ),
-              ),
-              onPressed: () => showChangePasswordDialog(context),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.security_outlined, size: 16),
-              label: const Text('Token Restriction'),
-              onPressed: _showTokenRestrictionDialog,
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              onPressed: _reloadCurrent,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
+        Builder(
+          builder: (context) {
+            final isMobile = MediaQuery.of(context).size.width < 700;
+            return PageHeader(
+              title: 'Portal & Device Administration',
+              icon: Icons.admin_panel_settings_outlined,
+              accentColor: const Color(0xFF334155),
+              actions: [
+                if (isMobile) ...[
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.tune_rounded, size: 20),
+                    tooltip: 'Admin Settings',
+                    onSelected: (val) {
+                      if (val == 'installer') _showInstallerPasswordDialog();
+                      if (val == 'admin_pw') showChangePasswordDialog(context);
+                      if (val == 'token_restr') _showTokenRestrictionDialog();
+                    },
+                    itemBuilder: (ctx) => [
+                      const PopupMenuItem(
+                        value: 'installer',
+                        child: Row(
+                          children: [
+                            Icon(Icons.key_rounded, size: 18),
+                            SizedBox(width: 8),
+                            Text('Installer Password'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'admin_pw',
+                        child: Row(
+                          children: [
+                            Icon(Icons.lock_reset_rounded, size: 18),
+                            SizedBox(width: 8),
+                            Text('Admin Password'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'token_restr',
+                        child: Row(
+                          children: [
+                            Icon(Icons.security_outlined, size: 18),
+                            SizedBox(width: 8),
+                            Text('Token Restriction'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: _reloadCurrent,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                ] else ...[
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accentLedger,
+                      backgroundColor: AppColors.accentLedgerTint,
+                      side: const BorderSide(
+                        color: AppColors.accentLedger,
+                        width: 1.2,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.key_rounded,
+                      size: 16,
+                      color: AppColors.accentLedger,
+                    ),
+                    label: const Text(
+                      'Installer Password',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: AppColors.accentLedger,
+                      ),
+                    ),
+                    onPressed: _showInstallerPasswordDialog,
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accentLedger,
+                      backgroundColor: AppColors.accentLedgerTint,
+                      side: const BorderSide(
+                        color: AppColors.accentLedger,
+                        width: 1.2,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.lock_reset_rounded,
+                      size: 16,
+                      color: AppColors.accentLedger,
+                    ),
+                    label: const Text(
+                      'Admin Password',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: AppColors.accentLedger,
+                      ),
+                    ),
+                    onPressed: () => showChangePasswordDialog(context),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.security_outlined, size: 16),
+                    label: const Text('Token Restriction'),
+                    onPressed: _showTokenRestrictionDialog,
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _reloadCurrent,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                ],
+              ],
+            );
+          },
         ),
         Container(
           color: AppColors.surfacePanel,
@@ -821,145 +874,292 @@ class _PortalUsersAdminScreenState extends ConsumerState<PortalUsersAdminScreen>
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       itemCount: users.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final user = users[index];
         final isAdmin = user.isAdmin;
-        return ListTile(
-          title: Row(
-            children: [
-              Text(
-                user.fullName,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isAdmin
-                      ? AppColors.accentLedger.withValues(alpha: 0.12)
-                      : Colors.grey.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isAdmin
-                        ? AppColors.accentLedger.withValues(alpha: 0.4)
-                        : Colors.grey.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+
+        return Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.lineHairline),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Icon(
-                      isAdmin
-                          ? Icons.admin_panel_settings_rounded
-                          : Icons.person_rounded,
-                      size: 13,
-                      color: isAdmin ? AppColors.accentLedger : Colors.grey[700],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isAdmin ? 'ADMIN' : 'USER',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: isAdmin ? AppColors.accentLedger : Colors.grey[700],
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: isAdmin
+                          ? AppColors.accentLedger.withValues(alpha: 0.15)
+                          : AppColors.surfaceSunken,
+                      child: Text(
+                        user.fullName.isNotEmpty
+                            ? user.fullName[0].toUpperCase()
+                            : 'U',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isAdmin
+                              ? AppColors.accentLedger
+                              : AppColors.inkPrimary,
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.fullName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isAdmin
+                                      ? AppColors.accentLedger.withValues(
+                                          alpha: 0.12,
+                                        )
+                                      : Colors.grey.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isAdmin
+                                        ? AppColors.accentLedger.withValues(
+                                            alpha: 0.3,
+                                          )
+                                        : Colors.grey.withValues(alpha: 0.3),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Text(
+                                  isAdmin ? 'ADMIN' : 'USER',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isAdmin
+                                        ? AppColors.accentLedger
+                                        : Colors.grey[700],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  '@${user.username}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(
+                        Icons.more_vert_rounded,
+                        size: 20,
+                        color: AppColors.inkSecondary,
+                      ),
+                      onSelected: (action) {
+                        if (action == 'view_password') _viewPassword(user);
+                        if (action == 'change_password') _changePassword(user);
+                        if (action == 'change_role') _changeRole(user);
+                        if (action == 'delete_user') _deleteUser(user);
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'view_password',
+                          child: Row(
+                            children: [
+                              Icon(Icons.key_outlined, size: 18),
+                              SizedBox(width: 8),
+                              Text('View Password'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'change_password',
+                          child: Row(
+                            children: [
+                              Icon(Icons.lock_reset_outlined, size: 18),
+                              SizedBox(width: 8),
+                              Text('Change Password'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'change_role',
+                          child: Row(
+                            children: [
+                              Icon(
+                                isAdmin
+                                    ? Icons.person_outline
+                                    : Icons.admin_panel_settings_outlined,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isAdmin
+                                    ? 'Demote to User'
+                                    : 'Promote to Admin',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        const PopupMenuItem(
+                          value: 'delete_user',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: AppColors.signalError,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Delete User',
+                                style: TextStyle(color: AppColors.signalError),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          subtitle: Text(
-            '${user.username} · ${user.email} · ${user.department} · ${user.branch}',
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                user.isActive ? 'Approved' : 'Pending',
-                style: TextStyle(
-                  color: user.isActive
-                      ? AppColors.signalCredit
-                      : AppColors.signalAmber,
-                ),
-              ),
-              Switch(
-                value: user.isActive,
-                onChanged: (v) => _setActive(user, v),
-              ),
-              const SizedBox(width: 8),
-              Text('${user.grantedLinkKeys.length} granted'),
-              PopupMenuButton<String>(
-                onSelected: (action) {
-                  if (action == 'view_password') _viewPassword(user);
-                  if (action == 'change_password') _changePassword(user);
-                  if (action == 'change_role') _changeRole(user);
-                  if (action == 'delete_user') _deleteUser(user);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'view_password',
-                    child: Text('View Password'),
-                  ),
-                  const PopupMenuItem(
-                    value: 'change_password',
-                    child: Text('Change Password'),
-                  ),
-                  PopupMenuItem(
-                    value: 'change_role',
-                    child: Row(
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          isAdmin
-                              ? Icons.person_outline
-                              : Icons.admin_panel_settings_outlined,
-                          size: 18,
+                        const Icon(
+                          Icons.email_outlined,
+                          size: 13,
+                          color: AppColors.inkMuted,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 4),
                         Text(
-                          isAdmin
-                              ? 'Demote to User'
-                              : 'Promote to Admin',
+                          user.email,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkSecondary,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 'delete_user',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_outline,
-                          size: 18,
-                          color: AppColors.signalError,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Delete User',
-                          style: TextStyle(color: AppColors.signalError),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: AppColors.signalError,
-                  size: 20,
+                    if (user.department.isNotEmpty)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.business_outlined,
+                            size: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            user.department,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.inkSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-                tooltip: 'Delete User',
-                onPressed: () => _deleteUser(user),
-              ),
-            ],
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: user.isActive
+                            ? AppColors.signalCredit.withValues(alpha: 0.1)
+                            : AppColors.signalAmber.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        user.isActive ? 'Approved' : 'Pending',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: user.isActive
+                              ? AppColors.signalCredit
+                              : AppColors.signalAmber,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Transform.scale(
+                      scale: 0.75,
+                      child: Switch(
+                        value: user.isActive,
+                        onChanged: (v) => _setActive(user, v),
+                      ),
+                    ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        side: const BorderSide(color: AppColors.accentLedger),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(
+                        Icons.security,
+                        size: 14,
+                        color: AppColors.accentLedger,
+                      ),
+                      label: Text(
+                        '${user.grantedLinkKeys.length} Grants',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accentLedger,
+                        ),
+                      ),
+                      onPressed: () => _editGrants(user),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          onTap: () => _editGrants(user),
         );
       },
     );
@@ -1103,196 +1303,261 @@ class _PortalUsersAdminScreenState extends ConsumerState<PortalUsersAdminScreen>
               margin: const EdgeInsets.only(bottom: 12),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
                 side: const BorderSide(color: AppColors.lineHairline),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? AppColors.signalCredit.withValues(alpha: 0.12)
-                            : AppColors.signalError.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.computer,
-                        color: isActive
-                            ? AppColors.signalCredit
-                            : AppColors.signalError,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? AppColors.signalCredit.withValues(alpha: 0.12)
+                                : AppColors.signalError.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.devices_rounded,
+                            color: isActive
+                                ? AppColors.signalCredit
+                                : AppColors.signalError,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 displayName,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isActive
-                                      ? Colors.green.shade50
-                                      : Colors.red.shade50,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: isActive
-                                        ? Colors.green.shade200
-                                        : Colors.red.shade200,
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isActive
+                                          ? Colors.green.shade50
+                                          : Colors.red.shade50,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: isActive
+                                            ? Colors.green.shade200
+                                            : Colors.red.shade200,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      device.tokenStatus.toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: isActive
+                                            ? Colors.green.shade800
+                                            : Colors.red.shade800,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                child: Text(
-                                  device.tokenStatus.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isActive
-                                        ? Colors.green.shade800
-                                        : Colors.red.shade800,
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Token v${device.tokenVersion}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.inkMuted,
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Token v${device.tokenVersion}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.inkMuted,
-                                ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 16,
-                            runSpacing: 4,
-                            children: [
-                              Text(
-                                'Login User: ${device.username.isNotEmpty ? device.username : "admin"} (ID: #${device.userId})',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.inkPrimary,
-                                ),
-                              ),
-                              if (device.email.isNotEmpty)
-                                Text(
-                                  'Email: ${device.email}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.inkSecondary,
-                                  ),
-                                ),
-                              Text(
-                                'Machine: ${device.machineFingerprint.isNotEmpty ? device.machineFingerprint : "Windows PC"}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.inkSecondary,
-                                ),
-                              ),
-                            ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 4,
+                      children: [
+                        Text(
+                          'Login User: ${device.username.isNotEmpty ? device.username : "admin"} (ID: #${device.userId})',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.inkPrimary,
                           ),
-                          const SizedBox(height: 4),
+                        ),
+                        if (device.email.isNotEmpty)
                           Text(
+                            'Email: ${device.email}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.inkSecondary,
+                            ),
+                          ),
+                        Text(
+                          'Machine: ${device.machineFingerprint.isNotEmpty ? device.machineFingerprint : "Device"}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.fingerprint,
+                          size: 14,
+                          color: AppColors.inkMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: SelectableText(
                             'Device ID: ${device.deviceId}',
                             style: const TextStyle(
                               fontSize: 11,
                               fontFamily: 'IBM Plex Mono',
-                              color: AppColors.inkMuted,
+                              color: AppColors.inkSecondary,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                device.isOtpExpired
-                                    ? Icons.warning_amber_rounded
-                                    : Icons.verified_user_outlined,
-                                size: 14,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 14),
+                          tooltip: 'Copy Device ID',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            Clipboard.setData(
+                              ClipboardData(text: device.deviceId),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Device ID copied to clipboard'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 4,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              device.isOtpExpired
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.verified_user_outlined,
+                              size: 13,
+                              color: device.isOtpExpired
+                                  ? AppColors.signalAmber
+                                  : AppColors.signalCredit,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Monthly OTP: ${device.isOtpExpired ? "EXPIRED" : "Valid"}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
                                 color: device.isOtpExpired
                                     ? AppColors.signalAmber
                                     : AppColors.signalCredit,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Monthly OTP: ${device.isOtpExpired ? "EXPIRED" : "Valid"} (Last: ${dateFormat.format(device.lastOtpVerifiedAt.toLocal())})',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: device.isOtpExpired
-                                      ? AppColors.signalAmber
-                                      : AppColors.inkSecondary,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Registered: ${dateFormat.format(device.createdAt.toLocal())}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.inkPrimary,
-                        side: const BorderSide(color: AppColors.lineHairline),
-                      ),
-                      onPressed: () => _assignDeviceUser(device),
-                      icon: const Icon(Icons.person_pin_outlined, size: 16),
-                      label: const Text('Assign User'),
-                    ),
-                    const SizedBox(width: 8),
-                    if (isActive)
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.signalError,
-                          side: const BorderSide(color: AppColors.signalError),
+                            ),
+                          ],
                         ),
-                        onPressed: () => _revokeDevice(device),
-                        icon: const Icon(Icons.block, size: 16),
-                        label: const Text('Revoke'),
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Revoked',
-                          style: TextStyle(
-                            fontSize: 12,
+                        Text(
+                          'Registered: ${dateFormat.format(device.createdAt.toLocal())}',
+                          style: const TextStyle(
+                            fontSize: 11,
                             color: AppColors.inkMuted,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const Divider(height: 1),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.inkPrimary,
+                              side: const BorderSide(
+                                color: AppColors.lineHairline,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () => _assignDeviceUser(device),
+                            icon: const Icon(
+                              Icons.person_pin_outlined,
+                              size: 16,
+                            ),
+                            label: const Text('Assign User'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (isActive)
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.signalError,
+                                side: const BorderSide(
+                                  color: AppColors.signalError,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () => _revokeDevice(device),
+                              icon: const Icon(Icons.block, size: 16),
+                              label: const Text('Revoke'),
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.lineHairline),
+                            ),
+                            child: const Text(
+                              'Revoked',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.inkMuted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1318,187 +1583,246 @@ class _PortalUsersAdminScreenState extends ConsumerState<PortalUsersAdminScreen>
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       itemCount: requests.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final req = requests[index];
         final isPending = req.status == 'pending';
         final isApproved = req.status == 'approved';
 
-        return ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isPending
-                  ? Colors.amber.shade100
-                  : (isApproved ? Colors.green.shade100 : Colors.red.shade100),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isPending
-                  ? Icons.pending_actions
-                  : (isApproved ? Icons.check_circle : Icons.cancel),
-              color: isPending
-                  ? Colors.amber.shade900
-                  : (isApproved ? Colors.green.shade800 : Colors.red.shade800),
-              size: 22,
-            ),
+        return Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.lineHairline),
           ),
-          title: Row(
-            children: [
-              Text(
-                req.fullName.isNotEmpty ? req.fullName : req.username,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isPending
-                      ? Colors.amber.shade50
-                      : (isApproved
-                            ? Colors.green.shade50
-                            : Colors.red.shade50),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  req.status.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isPending
-                        ? Colors.amber.shade800
-                        : (isApproved
-                              ? Colors.green.shade800
-                              : Colors.red.shade800),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 16,
-                runSpacing: 4,
-                children: [
-                  if (req.username.isNotEmpty)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.person_outline,
-                          size: 14,
-                          color: AppColors.inkSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Username: ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                        Text(
-                          req.username,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.inkPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (req.email.isNotEmpty)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.email_outlined,
-                          size: 14,
-                          color: AppColors.accentLedger,
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Email: ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                        SelectableText(
-                          req.email,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.accentLedger,
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Domain: ${req.domainRequested}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                  color: AppColors.inkPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Device: ${req.deviceId} · Requested: ${dateFormat.format(req.requestedAt.toLocal())}',
-                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
-              ),
-              if (req.rejectionReason != null &&
-                  req.rejectionReason!.isNotEmpty)
-                   ...[
-                const SizedBox(height: 2),
-                Text(
-                  'Reason: ${req.rejectionReason}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.signalError,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          trailing: isPending
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.signalError,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isPending
+                            ? Colors.amber.shade100
+                            : (isApproved
+                                ? Colors.green.shade100
+                                : Colors.red.shade100),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      onPressed: () => _rejectRequest(req),
-                      child: const Text('Reject'),
+                      child: Icon(
+                        isPending
+                            ? Icons.pending_actions_rounded
+                            : (isApproved
+                                ? Icons.check_circle_rounded
+                                : Icons.cancel_rounded),
+                        color: isPending
+                            ? Colors.amber.shade900
+                            : (isApproved
+                                ? Colors.green.shade800
+                                : Colors.red.shade800),
+                        size: 20,
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    GradientFilledButton(
-                      onPressed: () => _approveRequest(req),
-                      child: const Text('Approve'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            req.fullName.isNotEmpty
+                                ? req.fullName
+                                : req.username,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Domain: ${req.domainRequested}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.inkSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isPending
+                            ? Colors.amber.shade50
+                            : (isApproved
+                                ? Colors.green.shade50
+                                : Colors.red.shade50),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isPending
+                              ? Colors.amber.shade300
+                              : (isApproved
+                                  ? Colors.green.shade300
+                                  : Colors.red.shade300),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        req.status.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isPending
+                              ? Colors.amber.shade900
+                              : (isApproved
+                                  ? Colors.green.shade800
+                                  : Colors.red.shade800),
+                        ),
+                      ),
                     ),
                   ],
-                )
-              : (isApproved
-                    ? const Text(
-                        'Approved',
-                        style: TextStyle(
-                          color: AppColors.signalCredit,
-                          fontWeight: FontWeight.bold,
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 4,
+                  children: [
+                    if (req.username.isNotEmpty)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.person_outline,
+                            size: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            req.username,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.inkPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (req.email.isNotEmpty)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.email_outlined,
+                            size: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          SelectableText(
+                            req.email,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.accentLedger,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.fingerprint,
+                      size: 13,
+                      color: AppColors.inkMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: SelectableText(
+                        'Device: ${req.deviceId}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'IBM Plex Mono',
+                          color: AppColors.inkSecondary,
                         ),
-                      )
-                    : const Text(
-                        'Rejected',
-                        style: TextStyle(color: AppColors.signalError),
-                      )),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 14),
+                      tooltip: 'Copy Device ID',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: req.deviceId));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Device ID copied to clipboard'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                  'Requested: ${dateFormat.format(req.requestedAt.toLocal())}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+                if (req.rejectionReason != null &&
+                    req.rejectionReason!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Rejection Reason: ${req.rejectionReason}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.signalError,
+                    ),
+                  ),
+                ],
+                if (isPending) ...[
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.signalError,
+                            side: const BorderSide(
+                              color: AppColors.signalError,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () => _rejectRequest(req),
+                          child: const Text('Reject'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GradientFilledButton(
+                          onPressed: () => _approveRequest(req),
+                          child: const Text('Approve'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
         );
       },
     );
@@ -1763,10 +2087,12 @@ class _GrantsDialogState extends State<_GrantsDialog> {
 
     return AlertDialog(
       title: Text('Grant Access — ${widget.user.fullName}'),
-      content: SizedBox(
-        width: 720,
-        height: 480,
-        child: SingleChildScrollView(
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: SizedBox(
+          width: double.maxFinite,
+          height: 480,
+          child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1815,6 +2141,7 @@ class _GrantsDialogState extends State<_GrantsDialog> {
             ],
           ),
         ),
+      ),
       ),
       actions: [
         TextButton(
@@ -2002,8 +2329,8 @@ class _InstallerPasswordDialogState
           Text('Windows Installer Password'),
         ],
       ),
-      content: SizedBox(
-        width: 480,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

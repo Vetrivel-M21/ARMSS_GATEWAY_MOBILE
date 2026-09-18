@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,6 +24,7 @@ class DeviceIdentityService {
 
   static String? _cachedDeviceId;
   static String? _cachedDeviceToken;
+  static String? _cachedDeviceName;
 
   /// Retrieves the current DeviceIdentity or null if not registered yet.
   Future<DeviceIdentity?> getIdentity() async {
@@ -123,13 +125,101 @@ class DeviceIdentityService {
     }
   }
 
+  /// Resolves the actual human-readable hardware/device name.
+  /// E.g. "Samsung SM-S911B", "Google Pixel 7", "Redmi Note 12", "DESKTOP-ABC".
+  /// Never returns raw "localhost" on Android or mobile devices.
+  Future<String> getDeviceName() async {
+    if (_cachedDeviceName != null && _cachedDeviceName!.isNotEmpty) {
+      return _cachedDeviceName!;
+    }
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      if (Platform.isAndroid) {
+        final android = await deviceInfo.androidInfo;
+        final brand = android.brand.trim();
+        final model = android.model.trim();
+        if (brand.isNotEmpty && model.isNotEmpty) {
+          if (model.toLowerCase().startsWith(brand.toLowerCase())) {
+            _cachedDeviceName = model;
+            return model;
+          }
+          final formattedBrand = brand.length > 1
+              ? '${brand[0].toUpperCase()}${brand.substring(1)}'
+              : brand.toUpperCase();
+          final name = '$formattedBrand $model';
+          _cachedDeviceName = name;
+          return name;
+        }
+        if (model.isNotEmpty) {
+          _cachedDeviceName = model;
+          return model;
+        }
+        if (brand.isNotEmpty) {
+          _cachedDeviceName = brand;
+          return brand;
+        }
+        _cachedDeviceName = 'Android Mobile';
+        return 'Android Mobile';
+      } else if (Platform.isIOS) {
+        final ios = await deviceInfo.iosInfo;
+        if (ios.name.isNotEmpty) {
+          _cachedDeviceName = ios.name;
+          return ios.name;
+        }
+        if (ios.model.isNotEmpty) {
+          _cachedDeviceName = ios.model;
+          return ios.model;
+        }
+        if (ios.utsname.machine.isNotEmpty) {
+          _cachedDeviceName = ios.utsname.machine;
+          return ios.utsname.machine;
+        }
+        _cachedDeviceName = 'iPhone';
+        return 'iPhone';
+      } else if (Platform.isWindows) {
+        final win = await deviceInfo.windowsInfo;
+        if (win.computerName.isNotEmpty) {
+          _cachedDeviceName = win.computerName;
+          return win.computerName;
+        }
+      } else if (Platform.isMacOS) {
+        final mac = await deviceInfo.macOsInfo;
+        if (mac.computerName.isNotEmpty) {
+          _cachedDeviceName = mac.computerName;
+          return mac.computerName;
+        }
+      } else if (Platform.isLinux) {
+        final linux = await deviceInfo.linuxInfo;
+        if (linux.prettyName.isNotEmpty) {
+          _cachedDeviceName = linux.prettyName;
+          return linux.prettyName;
+        }
+        if (linux.name.isNotEmpty) {
+          _cachedDeviceName = linux.name;
+          return linux.name;
+        }
+      }
+    } catch (_) {}
+
+    final host = Platform.localHostname.trim();
+    if (host.isEmpty || host.toLowerCase() == 'localhost' || host == '127.0.0.1') {
+      final fallback = Platform.isAndroid
+          ? 'Android Mobile'
+          : (Platform.isIOS ? 'iPhone' : 'Mobile Device');
+      _cachedDeviceName = fallback;
+      return fallback;
+    }
+    _cachedDeviceName = host;
+    return host;
+  }
+
   /// Automatically self-registers this machine on the production backend
   /// and saves the newly issued credentials.
   /// If [deviceId] is not specified, uses the persistent local device ID.
   Future<DeviceIdentity?> registerDeviceOnServer({int? userId, String? deviceId}) async {
     try {
       final effectiveDeviceId = deviceId ?? await getDeviceId();
-      final machineName = Platform.localHostname;
+      final machineName = await getDeviceName();
       final uri = Uri.parse('${GatewayApiClient.apiBaseUrl}/devices/register');
       final response = await http
           .post(

@@ -117,8 +117,8 @@ class _MonthlyReverifyDialogState extends State<MonthlyReverifyDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 420,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

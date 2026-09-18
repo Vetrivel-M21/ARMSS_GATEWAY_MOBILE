@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../controllers/device_access_controller.dart';
+import 'device_token_modal.dart';
 
 /// A persistent notification strip displayed immediately below the App Bar
 /// whenever device token access is revoked or an activation request is pending.
@@ -51,112 +52,204 @@ class DeviceRevocationBanner extends ConsumerWidget {
           'Your device access token has been revoked by an administrator. Device ID: ${access.deviceId}';
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: 10,
-      ),
-      decoration: BoxDecoration(
-        color: bgColor,
-        border: Border(
-          left: BorderSide(color: borderColor, width: 4),
-          bottom: BorderSide(
-            color: borderColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: borderColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(icon, color: borderColor, size: 20),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isPending
-                        ? const Color(0xFF92400E)
-                        : const Color(0xFF991B1B),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+
+        return Material(
+          color: bgColor,
+          child: InkWell(
+            onTap: () => showDeviceTokenModal(context),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 14 : AppSpacing.lg,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: borderColor, width: 4),
+                  bottom: BorderSide(
+                    color: borderColor.withValues(alpha: 0.3),
+                    width: 1,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  details,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isPending
-                        ? const Color(0xFFB45309)
-                        : const Color(0xFFB91C1C),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                ),
-              ],
+              ),
+              child: isMobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: borderColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(icon, color: borderColor, size: 18),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isPending
+                                      ? const Color(0xFF92400E)
+                                      : const Color(0xFF991B1B),
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 13,
+                              color: AppColors.inkSecondary,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          details,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isPending
+                                ? const Color(0xFFB45309)
+                                : const Color(0xFFB91C1C),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (access.isLoading)
+                              const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            else if (isPending)
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.signalAmber,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                icon: const Icon(Icons.sync, size: 14),
+                                label: const Text('Check Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                                onPressed: () => ref.read(deviceAccessControllerProvider.notifier).pollApproval(),
+                              )
+                            else
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.signalError,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                icon: const Icon(Icons.vpn_key_outlined, size: 14),
+                                label: const Text('Activate Device', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                                onPressed: () => showDeviceTokenModal(context),
+                              ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: borderColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(icon, color: borderColor, size: 20),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: isPending
+                                      ? const Color(0xFF92400E)
+                                      : const Color(0xFF991B1B),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                details,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isPending
+                                      ? const Color(0xFFB45309)
+                                      : const Color(0xFFB91C1C),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        if (access.isLoading)
+                          const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else if (isPending)
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.signalAmber,
+                              side: const BorderSide(color: AppColors.signalAmber),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            icon: const Icon(Icons.sync, size: 16),
+                            label: const Text('Check Status'),
+                            onPressed: () => ref
+                                .read(deviceAccessControllerProvider.notifier)
+                                .pollApproval(),
+                          )
+                        else
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.signalError,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            icon: const Icon(Icons.vpn_key_outlined, size: 16),
+                            label: const Text('Request Activation'),
+                            onPressed: () => showDeviceTokenModal(context),
+                          ),
+                      ],
+                    ),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          if (access.isLoading)
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          else if (isPending)
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.signalAmber,
-                side: const BorderSide(color: AppColors.signalAmber),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              icon: const Icon(Icons.sync, size: 16),
-              label: const Text('Check Status'),
-              onPressed: () =>
-                  ref.read(deviceAccessControllerProvider.notifier).pollApproval(),
-            )
-          else
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.signalError,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              icon: const Icon(Icons.vpn_key_outlined, size: 16),
-              label: const Text('Request Activation'),
-              onPressed: () => ref
-                  .read(deviceAccessControllerProvider.notifier)
-                  .requestActivation(),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

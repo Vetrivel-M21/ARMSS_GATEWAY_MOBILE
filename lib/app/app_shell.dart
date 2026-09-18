@@ -17,6 +17,8 @@ import '../features/portals/presentation/screens/portals_screen.dart';
 import '../features/transactions/presentation/controllers/transaction_controllers.dart';
 import '../features/vetri_portal/presentation/screens/vetri_portal_screen.dart';
 import '../features/device_activation/presentation/controllers/device_access_controller.dart';
+import '../features/device_activation/presentation/widgets/device_id_chip.dart';
+import '../features/device_activation/presentation/widgets/device_token_modal.dart';
 import '../features/device_activation/presentation/widgets/device_revocation_banner.dart';
 import '../core/portal_links/portal_link_catalog_repository.dart';
 import '../shared_widgets/app_nav_rail.dart';
@@ -25,6 +27,8 @@ import '../shared_widgets/page_header.dart';
 import '../features/profile/presentation/screens/user_profile_screen.dart';
 import '../shared_widgets/portal_link_grid.dart';
 import '../shared_widgets/status_badge.dart';
+import '../core/updates/mobile_update_service.dart';
+import '../features/updates/presentation/widgets/update_dialog.dart';
 
 class _NavEntry {
   final String key;
@@ -41,9 +45,8 @@ class _NavEntry {
 
 /// Owns the persistent top bar (design system §3: company name / FY badge /
 /// day-status badge / user+role+menu, always visible so "is today open?" is
-/// never something the user has to hunt for) and the nav rail. Individual
-/// screens no longer carry their own `AppBar` — only their page title, filter
-/// row, and content, per the doc's layout diagram.
+/// never ambiguous), a shared side-rail on wide viewports, and bottom navigation
+/// on mobile viewports.
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
@@ -53,6 +56,31 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAutoUpdate();
+    });
+  }
+
+  Future<void> _checkAutoUpdate() async {
+    try {
+      final currentVersion = await getCurrentAppVersion();
+      final updateService = MobileUpdateService();
+      final update = await updateService.check();
+      if (update != null && mounted) {
+        await showAppUpdateDialog(
+          context,
+          updateInfo: update,
+          currentVersion: currentVersion,
+        );
+      }
+    } catch (_) {
+      // Non-blocking background check
+    }
+  }
 
   List<_NavEntry> _buildEntries() {
     final portalSession = ref
@@ -141,6 +169,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     final entries = _buildEntries();
     final selectedIndex = _selectedIndex < entries.length ? _selectedIndex : 0;
     final activeKey = entries[selectedIndex].key;
+    final isMobile = MediaQuery.of(context).size.width < 720;
+
+    final portalSession = ref.watch(portalSessionControllerProvider).valueOrNull;
+    final displayName = portalSession?.fullName.isNotEmpty == true
+        ? portalSession!.fullName
+        : (portalSession?.username ?? portalSession?.email ?? 'User');
 
     return CallbackShortcuts(
       bindings: {
@@ -150,25 +184,269 @@ class _AppShellState extends ConsumerState<AppShell> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
+          appBar: isMobile
+              ? AppBar(
+                  titleSpacing: 0,
+                  elevation: 0.5,
+                  shadowColor: Colors.black12,
+                  backgroundColor: AppColors.surfacePanel,
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset('assets/images/app_logo_mark.png', height: 26),
+                      const SizedBox(width: AppSpacing.sm),
+                      const Flexible(
+                        child: Text(
+                          'ARMSS Gateway',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.inkPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    const DeviceStatusIconButton(),
+                    IconButton(
+                      icon: const Icon(Icons.refresh_rounded, size: 21, color: AppColors.inkPrimary),
+                      tooltip: 'Refresh',
+                      onPressed: () => _triggerAppRefresh(context, ref),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.account_circle_outlined, size: 22, color: AppColors.inkPrimary),
+                      tooltip: displayName,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+                        );
+                      },
+                    ),
+                  ],
+                )
+              : null,
+          drawer: isMobile
+              ? Drawer(
+                  backgroundColor: AppColors.surfacePanel,
+                  child: Column(
+                    children: [
+                      DrawerHeader(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF0F172A),
+                              Color(0xFF1E293B),
+                            ],
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Row(
+                              children: [
+                                Image.asset('assets/images/app_logo_mark.png', height: 28),
+                                const SizedBox(width: AppSpacing.sm),
+                                const Text(
+                                  'ARMSS Gateway',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              displayName,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: portalSession?.isAdmin == true
+                                        ? const Color(0xFFF59E0B).withValues(alpha: 0.25)
+                                        : const Color(0xFF0284C7).withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: portalSession?.isAdmin == true
+                                          ? const Color(0xFFF59E0B)
+                                          : const Color(0xFF38BDF8),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    portalSession?.isAdmin == true ? 'ADMINISTRATOR' : 'PORTAL USER',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                      color: portalSession?.isAdmin == true
+                                          ? const Color(0xFFFDE68A)
+                                          : const Color(0xFFBAE6FD),
+                                    ),
+                                  ),
+                                ),
+                                if (portalSession?.department.isNotEmpty == true) ...[
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      portalSession!.department,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.white.withValues(alpha: 0.75),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Quick Device Token Banner in Drawer
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          showDeviceTokenModal(context);
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0284C7).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.phonelink_lock_rounded, size: 20, color: Color(0xFF0284C7)),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Device Identity & Token',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.inkPrimary),
+                                    ),
+                                    Text(
+                                      'Tap to view ID or activate token',
+                                      style: TextStyle(fontSize: 10.5, color: AppColors.inkSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFF0284C7)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1, color: AppColors.lineHairline),
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          children: [
+                            for (int i = 0; i < entries.length; i++) ...[
+                              ListTile(
+                                leading: Icon(
+                                  entries[i].icon,
+                                  color: i == selectedIndex ? const Color(0xFF0284C7) : AppColors.inkSecondary,
+                                ),
+                                title: Text(
+                                  entries[i].label,
+                                  style: TextStyle(
+                                    fontWeight: i == selectedIndex ? FontWeight.w700 : FontWeight.w500,
+                                    color: i == selectedIndex ? const Color(0xFF0284C7) : AppColors.inkPrimary,
+                                  ),
+                                ),
+                                selected: i == selectedIndex,
+                                selectedTileColor: const Color(0xFF0284C7).withValues(alpha: 0.08),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                                onTap: () {
+                                  setState(() => _selectedIndex = i);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, color: AppColors.lineHairline),
+                      ListTile(
+                        leading: const Icon(Icons.person_outline_rounded, color: AppColors.inkSecondary),
+                        title: const Text('My Profile', style: TextStyle(fontWeight: FontWeight.w500)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
+                        title: const Text('Log Out', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w600)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ref.read(currentUserIdProvider.notifier).setId(null);
+                          ref.read(portalSessionControllerProvider.notifier).logout();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                )
+              : null,
+          bottomNavigationBar: isMobile && entries.length > 1 && entries.length <= 5
+              ? NavigationBar(
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+                  destinations: [
+                    for (final e in entries)
+                      NavigationDestination(
+                        icon: Icon(e.icon),
+                        label: e.label,
+                      ),
+                  ],
+                )
+              : null,
           body: Column(
             children: [
-              _TopBar(activeKey: activeKey),
+              if (!isMobile) _TopBar(activeKey: activeKey),
               const _DefaultAdminPasswordBanner(),
               const DeviceRevocationBanner(),
               Expanded(
-                child: Row(
-                  children: [
-                    AppNavRail(
-                      items: [
-                        for (final e in entries)
-                          AppNavRailItem(icon: e.icon, label: e.label),
-                      ],
-                      selectedIndex: selectedIndex,
-                      onSelect: (i) => setState(() => _selectedIndex = i),
-                    ),
-                    Expanded(child: entries[selectedIndex].screen),
-                  ],
-                ),
+                child: isMobile
+                    ? entries[selectedIndex].screen
+                    : Row(
+                        children: [
+                          AppNavRail(
+                            items: [
+                              for (final e in entries)
+                                AppNavRailItem(icon: e.icon, label: e.label),
+                            ],
+                            selectedIndex: selectedIndex,
+                            onSelect: (i) => setState(() => _selectedIndex = i),
+                          ),
+                          Expanded(child: entries[selectedIndex].screen),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -352,9 +630,7 @@ class GenericPortalScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(portalSessionControllerProvider).valueOrNull;
-    final isPortalAdmin = session != null &&
-        (session.username.toLowerCase() == 'admin' ||
-            session.email.toLowerCase().startsWith('admin@'));
+    final isPortalAdmin = session?.isAdmin ?? false;
     final isLocalUser = ref.watch(currentUserProvider) != null;
     final showAll = isLocalUser || isPortalAdmin;
     final grantedKeys = session?.grantedLinkKeys ?? const [];
@@ -397,6 +673,9 @@ class _DefaultAdminPasswordBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(portalSessionControllerProvider).valueOrNull;
+    if (session?.isAdmin != true) return const SizedBox.shrink();
+
     final isDefaultAsync = ref.watch(isDefaultAdminPasswordProvider);
     final isDefault = isDefaultAsync.valueOrNull ?? false;
 

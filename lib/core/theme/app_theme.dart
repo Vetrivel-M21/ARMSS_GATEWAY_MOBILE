@@ -40,9 +40,13 @@ class AppColors {
   static const categoryIncome = Color(0xFF16A34A);
   static const categoryExpense = Color(0xFFD97706);
 
-  /// Soft shadow used on cards/panels/dialogs in place of a flat border.
-  static List<BoxShadow> softShadow({double opacity = 0.06}) => [
-        BoxShadow(color: Colors.black.withValues(alpha: opacity), blurRadius: 12, offset: const Offset(0, 3)),
+  /// Modern soft shadow with smooth blur for mobile cards.
+  static List<BoxShadow> softShadow({double opacity = 0.05}) => [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: opacity),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
       ];
 }
 
@@ -53,8 +57,8 @@ class AppSpacing {
   static const sm = 8.0;
   static const md = 12.0;
   static const lg = 16.0;
-  static const xl = 24.0;
-  static const xxl = 32.0;
+  static const xl = 20.0;
+  static const xxl = 28.0;
 }
 
 /// The one place amount/date/id text gets its monospace treatment — deliberate
@@ -73,8 +77,8 @@ class AppTextStyles {
 class AppTheme {
   AppTheme._();
 
-  static const _panelRadius = 10.0;
-  static const _controlRadius = 8.0;
+  static const _panelRadius = 20.0;
+  static const _controlRadius = 14.0;
 
   static ThemeData light() {
     final colorScheme = const ColorScheme.light(
@@ -97,11 +101,11 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.surfaceCanvas,
       fontFamily: 'IBM Plex Sans',
       textTheme: const TextTheme(
-        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.inkPrimary),
-        titleMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.inkPrimary),
-        bodyMedium: TextStyle(fontSize: 13, color: AppColors.inkPrimary),
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.3, color: AppColors.inkPrimary),
+        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.inkPrimary),
+        bodyMedium: TextStyle(fontSize: 13.5, color: AppColors.inkPrimary),
         bodySmall: TextStyle(fontSize: 12, color: AppColors.inkSecondary),
-        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.1, color: AppColors.inkSecondary),
+        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2, color: AppColors.inkSecondary),
       ),
       dividerColor: AppColors.lineHairline,
       dividerTheme: const DividerThemeData(color: AppColors.lineHairline, thickness: 1, space: 1),
@@ -113,17 +117,17 @@ class AppTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfacePanel,
-        elevation: 8,
-        shadowColor: Colors.black.withValues(alpha: 0.15),
-        shape: panelShape,
+        elevation: 6,
+        shadowColor: Colors.black.withValues(alpha: 0.12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.accentLedger,
           foregroundColor: Colors.white,
           elevation: 1,
-          shadowColor: AppColors.accentLedger.withValues(alpha: 0.4),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          shadowColor: AppColors.accentLedger.withValues(alpha: 0.3),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 14),
           shape: controlShape,
         ),
       ),
@@ -131,8 +135,8 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.inkPrimary,
           backgroundColor: AppColors.surfacePanel,
-          side: const BorderSide(color: AppColors.lineHairline),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          side: const BorderSide(color: AppColors.lineHairline, width: 1.2),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 14),
           shape: controlShape,
         ),
       ),
@@ -141,14 +145,14 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceSunken,
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
-        labelStyle: const TextStyle(fontSize: 12, color: AppColors.inkSecondary),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(_controlRadius), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_controlRadius), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_controlRadius), borderSide: const BorderSide(color: AppColors.accentLedger, width: 2)),
+        fillColor: AppColors.surfaceCanvas,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: const TextStyle(fontSize: 13, color: AppColors.inkSecondary),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(_controlRadius), borderSide: const BorderSide(color: AppColors.lineHairline)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_controlRadius), borderSide: const BorderSide(color: AppColors.lineHairline)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_controlRadius), borderSide: const BorderSide(color: AppColors.accentLedger, width: 1.8)),
         errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_controlRadius), borderSide: const BorderSide(color: AppColors.signalError)),
-        errorStyle: const TextStyle(color: AppColors.signalError, fontSize: 12),
+        errorStyle: const TextStyle(color: AppColors.signalError, fontSize: 11.5),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(

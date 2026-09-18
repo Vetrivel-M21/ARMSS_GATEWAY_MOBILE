@@ -93,27 +93,59 @@ class PortalCategoryListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final links = [for (final category in categories) ...category.links];
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      child: Wrap(
-        spacing: AppSpacing.lg,
-        runSpacing: AppSpacing.lg,
-        children: [
-          for (final link in links)
-            SizedBox(
-              width: 200,
-              height: 164,
-              child: PortalCardTile(
-                name: link.name,
-                icon: link.icon,
-                color: link.color,
-                imageUrl: link.imageUrl,
-                onTap: () => launchGatedPortalLink(context, link),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        if (isMobile) {
+          final crossAxisCount = constraints.maxWidth < 360 ? 1 : 2;
+          return GridView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: crossAxisCount == 1 ? 2.2 : 0.95,
             ),
-          ...extraTiles,
-        ],
-      ),
+            itemCount: links.length + extraTiles.length,
+            itemBuilder: (context, index) {
+              if (index < links.length) {
+                final link = links[index];
+                return PortalCardTile(
+                  name: link.name,
+                  icon: link.icon,
+                  color: link.color,
+                  imageUrl: link.imageUrl,
+                  onTap: () => launchGatedPortalLink(context, link),
+                );
+              }
+              return extraTiles[index - links.length];
+            },
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.lg,
+            children: [
+              for (final link in links)
+                SizedBox(
+                  width: 200,
+                  height: 164,
+                  child: PortalCardTile(
+                    name: link.name,
+                    icon: link.icon,
+                    color: link.color,
+                    imageUrl: link.imageUrl,
+                    onTap: () => launchGatedPortalLink(context, link),
+                  ),
+                ),
+              ...extraTiles,
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -139,67 +171,86 @@ class PortalCardTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.surfacePanel,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        splashColor: color.withValues(alpha: 0.12),
         hoverColor: color.withValues(alpha: 0.06),
         child: Container(
-          decoration: BoxDecoration(boxShadow: AppColors.softShadow()),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.lineHairline, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(height: 4, color: color),
+              Container(height: 3.5, color: color),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: imageUrl == null
-                            ? Icon(icon, color: color, size: 22)
-                            : Image.network(
-                                imageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Icon(icon, color: color, size: 22),
-                              ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.inkPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(
-                            Icons.open_in_browser,
-                            size: 12,
-                            color: AppColors.inkMuted,
+                          Container(
+                            width: 44,
+                            height: 44,
+                            clipBehavior: Clip.antiAlias,
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: imageUrl == null
+                                ? Icon(icon, color: color, size: 22)
+                                : Image.network(
+                                    imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Icon(icon, color: color, size: 22),
+                                  ),
                           ),
-                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.arrow_outward_rounded, size: 14, color: color),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: AppColors.inkPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
                           Text(
                             caption,
                             style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.inkMuted,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.inkSecondary,
                             ),
                           ),
                         ],

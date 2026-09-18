@@ -28,6 +28,7 @@ class PortalsScreen extends ConsumerStatefulWidget {
 
 class _PortalsScreenState extends ConsumerState<PortalsScreen> {
   List<PortalLink>? _catalog;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -58,59 +59,173 @@ class _PortalsScreenState extends ConsumerState<PortalsScreen> {
         ? catalog
         : catalog.where((link) => grantedKeys.contains(link.key)).toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const PageHeader(
-          title: 'Portals',
-          icon: Icons.apps_outlined,
-          accentColor: Color(0xFF0284C7),
-        ),
-        Expanded(
-          child: visibleLinks.isEmpty
-              ? _NoPortalsEmptyState(
-                  onRefresh: () async {
-                    ref.invalidate(portalSessionControllerProvider);
-                    await _loadCatalog();
-                    await ref
-                        .read(deviceAccessControllerProvider.notifier)
-                        .checkStatus();
-                    ref
-                        .read(appRefreshSignalProvider.notifier)
-                        .update((v) => v + 1);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Portal access permissions refreshed.'),
-                          duration: Duration(seconds: 2),
+    final filteredLinks = _searchQuery.trim().isEmpty
+        ? visibleLinks
+        : visibleLinks
+            .where((l) =>
+                l.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 650;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isMobile)
+              const PageHeader(
+                title: 'Portals',
+                icon: Icons.apps_outlined,
+                accentColor: Color(0xFF0284C7),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.grid_view_rounded, size: 20, color: Color(0xFF0284C7)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Available Portals',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.inkPrimary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${visibleLinks.length} apps',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0284C7),
                         ),
-                      );
-                    }
-                  },
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: Wrap(
-                    spacing: AppSpacing.lg,
-                    runSpacing: AppSpacing.lg,
-                    children: [
-                      for (final link in visibleLinks)
-                        SizedBox(
-                          width: 200,
-                          height: 164,
-                          child: PortalCardTile(
-                            name: link.name,
-                            icon: link.icon,
-                            color: link.color,
-                            imageUrl: link.imageUrl,
-                            onTap: () => launchGatedPortalLink(context, link),
-                          ),
-                        ),
-                    ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Search Filter
+            if (visibleLinks.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 16 : 20,
+                  0,
+                  isMobile ? 16 : 20,
+                  isMobile ? 10 : 16,
+                ),
+                child: TextField(
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                  decoration: InputDecoration(
+                    hintText: 'Search portals & internal apps...',
+                    hintStyle: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.inkSecondary),
+                    filled: true,
+                    fillColor: AppColors.surfacePanel,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.lineHairline),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.lineHairline),
+                    ),
                   ),
                 ),
-        ),
-      ],
+              ),
+
+            Expanded(
+              child: visibleLinks.isEmpty
+                  ? _NoPortalsEmptyState(
+                      onRefresh: () async {
+                        ref.invalidate(portalSessionControllerProvider);
+                        await _loadCatalog();
+                        await ref
+                            .read(deviceAccessControllerProvider.notifier)
+                            .checkStatus();
+                        ref
+                            .read(appRefreshSignalProvider.notifier)
+                            .update((v) => v + 1);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Portal access permissions refreshed.'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    )
+                  : filteredLinks.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.search_off_rounded, size: 40, color: AppColors.inkMuted),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No portals match "$_searchQuery"',
+                                style: const TextStyle(color: AppColors.inkSecondary, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        )
+                      : isMobile
+                          ? GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: constraints.maxWidth < 360 ? 1 : 2,
+                                mainAxisSpacing: 14,
+                                crossAxisSpacing: 14,
+                                childAspectRatio: constraints.maxWidth < 360 ? 2.2 : 0.95,
+                              ),
+                              itemCount: filteredLinks.length,
+                              itemBuilder: (context, index) {
+                                final link = filteredLinks[index];
+                                return PortalCardTile(
+                                  name: link.name,
+                                  icon: link.icon,
+                                  color: link.color,
+                                  imageUrl: link.imageUrl,
+                                  onTap: () => launchGatedPortalLink(context, link),
+                                );
+                              },
+                            )
+                          : SingleChildScrollView(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                              child: Wrap(
+                                spacing: AppSpacing.lg,
+                                runSpacing: AppSpacing.lg,
+                                children: [
+                                  for (final link in filteredLinks)
+                                    SizedBox(
+                                      width: 200,
+                                      height: 164,
+                                      child: PortalCardTile(
+                                        name: link.name,
+                                        icon: link.icon,
+                                        color: link.color,
+                                        imageUrl: link.imageUrl,
+                                        onTap: () => launchGatedPortalLink(context, link),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

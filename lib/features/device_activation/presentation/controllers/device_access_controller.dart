@@ -12,6 +12,7 @@ class DeviceAccessState {
   final String? rejectionReason;
   final String? message;
   final DateTime? lastCheckedAt;
+  final bool hasToken;
 
   const DeviceAccessState({
     this.isRevoked = false,
@@ -22,6 +23,7 @@ class DeviceAccessState {
     this.rejectionReason,
     this.message,
     this.lastCheckedAt,
+    this.hasToken = false,
   });
 
   DeviceAccessState copyWith({
@@ -33,6 +35,7 @@ class DeviceAccessState {
     String? rejectionReason,
     String? message,
     DateTime? lastCheckedAt,
+    bool? hasToken,
   }) {
     return DeviceAccessState(
       isRevoked: isRevoked ?? this.isRevoked,
@@ -43,6 +46,7 @@ class DeviceAccessState {
       rejectionReason: rejectionReason ?? this.rejectionReason,
       message: message ?? this.message,
       lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
+      hasToken: hasToken ?? this.hasToken,
     );
   }
 }
@@ -183,7 +187,7 @@ class DeviceAccessController extends Notifier<DeviceAccessState> {
 
     final result = await _repository.requestActivation(
       deviceId: devId,
-      domainRequested: domain ?? 'Desktop Portal Launcher',
+      domainRequested: domain ?? 'Mobile Portal App',
     );
 
     if (result.isSuccess) {
@@ -255,6 +259,93 @@ class DeviceAccessController extends Notifier<DeviceAccessState> {
       }
     }
     return false;
+  }
+
+  /// Auto-registers this device directly on the server.
+  Future<bool> autoRegisterDevice({int? userId}) async {
+    state = state.copyWith(isLoading: true, message: null);
+    try {
+      final devId = state.deviceId.isNotEmpty
+          ? state.deviceId
+          : await _identityService.getDeviceId();
+      final newIdentity = await _identityService.registerDeviceOnServer(
+        userId: userId,
+        deviceId: devId,
+      );
+      if (newIdentity != null) {
+        state = state.copyWith(
+          isLoading: false,
+          isRevoked: false,
+          hasToken: true,
+          deviceId: newIdentity.deviceId,
+          requestStatus: 'approved',
+          reason: null,
+          message: 'Device successfully registered and token activated!',
+          lastCheckedAt: DateTime.now(),
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          message: 'Server auto-registration failed. Try requesting approval or entering token.',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        message: 'Registration error: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Manually activate a token provided by an admin.
+  Future<bool> manualTokenActivation(String rawToken) async {
+    final token = rawToken.trim();
+    if (token.isEmpty) {
+      state = state.copyWith(message: 'Token cannot be empty.');
+      return false;
+    }
+    state = state.copyWith(isLoading: true, message: null);
+    try {
+      final devId = state.deviceId.isNotEmpty
+          ? state.deviceId
+          : await _identityService.getDeviceId();
+      
+      final val = await _repository.validateToken(
+        deviceId: devId,
+        token: token,
+      );
+
+      if (val.isSuccess && val.valueOrNull!.isValid) {
+        await _identityService.saveToken(token, deviceId: devId);
+        state = state.copyWith(
+          isLoading: false,
+          isRevoked: false,
+          hasToken: true,
+          deviceId: devId,
+          requestStatus: 'approved',
+          reason: null,
+          message: 'Token verified and device activated!',
+          lastCheckedAt: DateTime.now(),
+        );
+        return true;
+      } else {
+        final reason = val.valueOrNull?.reason ?? 'Invalid token';
+        state = state.copyWith(
+          isLoading: false,
+          message: 'Token rejected: $reason',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        message: 'Verification failed: $e',
+      );
+      return false;
+    }
   }
 
   /// Directly mark access revoked (e.g. from link launcher rejection).

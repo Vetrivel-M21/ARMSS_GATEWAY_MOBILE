@@ -193,8 +193,8 @@ class _AccessRevokedDialogState extends State<AccessRevokedDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 440,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

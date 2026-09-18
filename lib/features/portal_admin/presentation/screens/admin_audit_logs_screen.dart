@@ -138,88 +138,64 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
   }
 
   Widget _buildFilterBar() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       color: AppColors.surfacePanel,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText:
-                        'Search by actor, event, device ID, or user ID...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    isDense: true,
-                    filled: true,
-                    fillColor: AppColors.surfaceSunken,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: AppColors.lineHairline,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: AppColors.lineHairline,
-                      ),
-                    ),
-                  ),
-                  onChanged: (v) => setState(() => _searchQuery = v.trim()),
+          if (isMobile) ...[
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'Search actor, event, device, user...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                isDense: true,
+                filled: true,
+                fillColor: AppColors.surfaceSunken,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.lineHairline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.lineHairline),
                 ),
               ),
-              const SizedBox(width: 12),
-              // User Filter Dropdown
-              Container(
-                height: 40,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceSunken,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.lineHairline),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int?>(
-                    value: _selectedUserId,
-                    isDense: true,
-                    icon: const Icon(
-                      Icons.arrow_drop_down,
-                      size: 20,
-                      color: AppColors.inkSecondary,
+              onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceSunken,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.lineHairline),
                     ),
-                    hint: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int?>(
+                        value: _selectedUserId,
+                        isDense: true,
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          size: 20,
                           color: AppColors.inkSecondary,
                         ),
-                        SizedBox(width: 6),
-                        Text(
-                          'All Users',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.inkPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    items: [
-                      const DropdownMenuItem<int?>(
-                        value: null,
-                        child: Row(
+                        hint: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.people_outline,
+                              Icons.person_outline,
                               size: 16,
                               color: AppColors.inkSecondary,
                             ),
@@ -228,52 +204,196 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                               'All Users',
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                color: AppColors.inkPrimary,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      if (_users != null)
-                        ..._users!.map((u) {
-                          return DropdownMenuItem<int?>(
-                            value: u.id,
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.person_outline,
+                                Icon(
+                                  Icons.people_outline,
                                   size: 16,
                                   color: AppColors.inkSecondary,
                                 ),
-                                const SizedBox(width: 6),
+                                SizedBox(width: 6),
                                 Text(
-                                  '${u.fullName} (@${u.username})',
-                                  style: const TextStyle(fontSize: 13),
+                                  'All Users',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ],
                             ),
-                          );
-                        }),
-                    ],
-                    onChanged: (val) {
-                      setState(() => _selectedUserId = val);
-                    },
+                          ),
+                          if (_users != null)
+                            ..._users!.map((u) {
+                              return DropdownMenuItem<int?>(
+                                value: u.id,
+                                child: Text(
+                                  '${u.fullName} (@${u.username})',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              );
+                            }),
+                        ],
+                        onChanged: (val) {
+                          setState(() => _selectedUserId = val);
+                        },
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              if (_allLogs != null)
+                const SizedBox(width: 10),
                 Text(
-                  '${_filteredLogs.length} of ${_allLogs!.length} records',
+                  '${_filteredLogs.length} logs',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.inkSecondary,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText:
+                          'Search by actor, event, device ID, or user ID...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      isDense: true,
+                      filled: true,
+                      fillColor: AppColors.surfaceSunken,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: AppColors.lineHairline,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: AppColors.lineHairline,
+                        ),
+                      ),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v.trim()),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceSunken,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.lineHairline),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int?>(
+                      value: _selectedUserId,
+                      isDense: true,
+                      icon: const Icon(
+                        Icons.arrow_drop_down,
+                        size: 20,
+                        color: AppColors.inkSecondary,
+                      ),
+                      hint: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 16,
+                            color: AppColors.inkSecondary,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'All Users',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.inkPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 16,
+                                color: AppColors.inkSecondary,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'All Users',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_users != null)
+                          ..._users!.map((u) {
+                            return DropdownMenuItem<int?>(
+                              value: u.id,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.person_outline,
+                                    size: 16,
+                                    color: AppColors.inkSecondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${u.fullName} (@${u.username})',
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                      ],
+                      onChanged: (val) {
+                        setState(() => _selectedUserId = val);
+                      },
+                    ),
+                  ),
+                ),
+                if (_filteredLogs.length != (_allLogs?.length ?? 0))
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Text(
+                      '${_filteredLogs.length} of ${_allLogs?.length ?? 0}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.inkSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -372,6 +492,20 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 650;
+
+        if (isMobile) {
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            itemCount: filtered.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final log = filtered[index];
+              return _buildMobileAuditCard(log, dateFormat);
+            },
+          );
+        }
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Container(
@@ -561,6 +695,169 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
     );
   }
 
+  Widget _buildMobileAuditCard(AdminAuditLog log, DateFormat dateFormat) {
+    final summary = _formatMetadataSummary(log.metadata);
+    final targetUser = log.userId != null
+        ? _users?.cast<AdminPortalUser?>().firstWhere(
+            (user) => user?.id == log.userId,
+            orElse: () => null,
+          )
+        : null;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppColors.lineHairline),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _showLogDetails(log),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildBadge(log.eventType)),
+                  const SizedBox(width: 8),
+                  Text(
+                    dateFormat.format(log.createdAt.toLocal()),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'IBM Plex Mono',
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.account_circle_outlined,
+                        size: 14,
+                        color: AppColors.inkSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Actor: ${log.actor}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.inkPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (targetUser != null || log.userId != null)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 12,
+                          color: AppColors.inkMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          targetUser != null
+                              ? '${targetUser.fullName} (#${targetUser.id})'
+                              : 'User #${log.userId}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              if (log.deviceId != null && log.deviceId!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.perm_device_information_outlined,
+                      size: 13,
+                      color: AppColors.inkMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        log.deviceId!,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'IBM Plex Mono',
+                          color: AppColors.inkSecondary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 14),
+                      tooltip: 'Copy Device ID',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: log.deviceId!));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Device ID copied to clipboard'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+              if (summary.isNotEmpty && summary != '—') ...[
+                const SizedBox(height: 8),
+                Text(
+                  summary,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.inkSecondary,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Tap to view payload',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentLedger,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 14,
+                    color: AppColors.accentLedger,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBadge(String eventType) {
     final ev = eventType.toLowerCase();
     Color badgeBg = Colors.grey.shade100;
@@ -660,8 +957,8 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
             ),
           ],
         ),
-        content: SizedBox(
-          width: 520,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../core/updates/app_update_service.dart';
+import '../core/updates/mobile_update_service.dart';
 
 class AppNavRailItem {
   final IconData icon;

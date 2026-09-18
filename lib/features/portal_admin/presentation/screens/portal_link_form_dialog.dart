@@ -107,8 +107,8 @@ class _PortalLinkFormDialogState extends State<PortalLinkFormDialog> {
 
     return AlertDialog(
       title: Text(widget.link == null ? 'Add Web App' : 'Edit Web App'),
-      content: SizedBox(
-        width: 520,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

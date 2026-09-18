@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/app_theme.dart';
-import '../core/updates/app_update_service.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/portal_auth/presentation/controllers/portal_auth_controllers.dart';
 import 'app_shell.dart';
@@ -17,47 +16,7 @@ class MisApp extends ConsumerStatefulWidget {
 }
 
 class _MisAppState extends ConsumerState<MisApp> {
-  bool _updateCheckStarted = false;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_updateCheckStarted) {
-      _updateCheckStarted = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
-    }
-  }
-
-  Future<void> _checkForUpdate() async {
-    try {
-      final update = await AppUpdateService().check();
-      if (!mounted || update == null) return;
-      final install = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Update available'),
-          content: Text(
-            'ARMSS Gateway ${update.version} is available. Update now?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Later'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Update'),
-            ),
-          ],
-        ),
-      );
-      if (install != true || !mounted) return;
-      await AppUpdateService().install(update);
-    } catch (_) {
-      // Update availability must never block normal application startup.
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

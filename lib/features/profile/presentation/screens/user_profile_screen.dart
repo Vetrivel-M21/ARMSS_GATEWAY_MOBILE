@@ -10,6 +10,10 @@ import '../../../../core/rbac/current_user_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../portal_admin/presentation/screens/portal_users_admin_screen.dart';
 import '../../../portal_auth/presentation/controllers/portal_auth_controllers.dart';
+import '../../../device_activation/presentation/widgets/device_token_modal.dart';
+import '../../../device_activation/presentation/widgets/device_id_chip.dart';
+import '../../../../core/updates/mobile_update_service.dart';
+import '../../../updates/presentation/widgets/update_dialog.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   const UserProfileScreen({super.key});
@@ -55,9 +59,15 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   int _otpCooldown = 0;
   Timer? _cooldownTimer;
 
+  bool _isCheckingUpdate = false;
+  String _currentVersionStr = '1.1.2';
+
   @override
   void initState() {
     super.initState();
+    getCurrentAppVersion().then((v) {
+      if (mounted) setState(() => _currentVersionStr = v);
+    });
     _usernameController = TextEditingController();
     _emailController = TextEditingController();
     _fullNameController = TextEditingController();
@@ -196,10 +206,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
     final portalSession = ref.read(portalSessionControllerProvider).valueOrNull;
     final localUser = ref.read(currentUserProvider);
-    final isPortalAdmin =
-        portalSession != null &&
-        (portalSession.username.toLowerCase() == 'admin' ||
-            portalSession.email.toLowerCase().startsWith('admin@'));
+    final isPortalAdmin = portalSession?.isAdmin ?? false;
     final isLocalAdmin = localUser?.isAdminOrSuper ?? false;
 
     try {
@@ -448,13 +455,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         .watch(portalSessionControllerProvider)
         .valueOrNull;
 
-    final isPortalAdmin =
-        portalSession != null &&
-        (portalSession.username.toLowerCase() == 'admin' ||
-            portalSession.email.toLowerCase().startsWith('admin@'));
+    final isPortalAdmin = portalSession?.isAdmin ?? false;
     final isAdmin = (localUser?.isAdminOrSuper ?? false) || isPortalAdmin;
 
-    final username = portalSession?.username ?? localUser?.username ?? 'admin';
+    final username = portalSession?.username ?? localUser?.username ?? 'User';
     final email =
         portalSession?.email ?? (isAdmin ? 'armssdirector@gmail.com' : '');
     final currentFullName =
@@ -527,40 +531,240 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1000),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Left Column: Profile details
-                        Expanded(
-                          flex: 5,
-                          child: _buildProfileCard(
-                            username: username,
-                            email: email,
-                            roleName: isAdmin ? 'Administrator' : 'Portal User',
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.xl),
-                        // Right Column: Password security
-                        Expanded(
-                          flex: 6,
-                          child: _buildSecurityCard(
-                            email: email,
-                            isAdmin: isAdmin,
-                          ),
-                        ),
-                      ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isSmallScreen = constraints.maxWidth < 750;
+
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.all(isSmallScreen ? 16 : AppSpacing.xl),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1000),
+                        child: isSmallScreen
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildProfileCard(
+                                    username: username,
+                                    email: email,
+                                    roleName:
+                                        isAdmin ? 'Administrator' : 'Portal User',
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildMobileDeviceCard(context),
+                                  const SizedBox(height: 16),
+                                  _buildAppUpdateCard(context),
+                                  const SizedBox(height: 16),
+                                  _buildSecurityCard(
+                                    email: email,
+                                    isAdmin: isAdmin,
+                                  ),
+                                ],
+                              )
+                            : Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 5,
+                                    child: Column(
+                                      children: [
+                                        _buildProfileCard(
+                                          username: username,
+                                          email: email,
+                                          roleName: isAdmin
+                                              ? 'Administrator'
+                                              : 'Portal User',
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _buildMobileDeviceCard(context),
+                                        const SizedBox(height: 16),
+                                        _buildAppUpdateCard(context),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.xl),
+                                  Expanded(
+                                    flex: 6,
+                                    child: _buildSecurityCard(
+                                      email: email,
+                                      isAdmin: isAdmin,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _checkForAppUpdate() async {
+    setState(() => _isCheckingUpdate = true);
+    try {
+      final service = MobileUpdateService();
+      final update = await service.check();
+      if (!mounted) return;
+      if (update != null) {
+        await showAppUpdateDialog(
+          context,
+          updateInfo: update,
+          currentVersion: _currentVersionStr,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text('App is up to date (v$_currentVersionStr)'),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Update check error: $e'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isCheckingUpdate = false);
+    }
+  }
+
+  Widget _buildAppUpdateCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfacePanel,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.lineHairline),
+        boxShadow: AppColors.softShadow(),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.system_update_rounded, size: 20, color: Color(0xFF10B981)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'App Version & Updates',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.inkPrimary),
+                    ),
+                    Text(
+                      'Installed Version: v$_currentVersionStr',
+                      style: const TextStyle(fontSize: 11.5, color: AppColors.inkSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: _isCheckingUpdate
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded, size: 16),
+              label: Text(_isCheckingUpdate ? 'Checking Server...' : 'Check for Updates'),
+              onPressed: _isCheckingUpdate ? null : _checkForAppUpdate,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileDeviceCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfacePanel,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.lineHairline),
+        boxShadow: AppColors.softShadow(),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.phonelink_lock_rounded, size: 20, color: Color(0xFF0284C7)),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Device Security & Activation',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.inkPrimary),
+                    ),
+                    Text(
+                      'Hardware token identity for portal access',
+                      style: TextStyle(fontSize: 11.5, color: AppColors.inkSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const DeviceIdChip(),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(Icons.settings_outlined, size: 16),
+              label: const Text('Manage Device Token'),
+              onPressed: () => showDeviceTokenModal(context),
+            ),
+          ),
+        ],
       ),
     );
   }
