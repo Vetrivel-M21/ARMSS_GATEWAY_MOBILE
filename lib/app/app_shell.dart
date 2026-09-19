@@ -193,7 +193,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                   title: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset('assets/images/app_logo_mark.png', height: 26),
+                      ClipOval(
+                        child: Image.asset('assets/images/app_logo_mark.png', height: 28, width: 28, fit: BoxFit.cover),
+                      ),
                       const SizedBox(width: AppSpacing.sm),
                       const Flexible(
                         child: Text(
@@ -249,7 +251,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                           children: [
                             Row(
                               children: [
-                                Image.asset('assets/images/app_logo_mark.png', height: 28),
+                                ClipOval(
+                                  child: Image.asset('assets/images/app_logo_mark.png', height: 32, width: 32, fit: BoxFit.cover),
+                                ),
                                 const SizedBox(width: AppSpacing.sm),
                                 const Text(
                                   'ARMSS Gateway',
@@ -498,7 +502,9 @@ class _TopBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Image.asset('assets/images/app_logo_mark.png', height: 32),
+          ClipOval(
+            child: Image.asset('assets/images/app_logo_mark.png', height: 36, width: 36, fit: BoxFit.cover),
+          ),
           const SizedBox(width: AppSpacing.md),
           _fyBadge(fyLabel),
           const SizedBox(width: AppSpacing.sm),
