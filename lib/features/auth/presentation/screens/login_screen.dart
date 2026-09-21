@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/device_auth/device_account_binding_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/updates/mobile_update_service.dart';
 import '../../../device_activation/presentation/controllers/device_access_controller.dart';
@@ -25,6 +26,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isSubmitting = false;
   String? _errorMessage;
+  BoundAccount? _boundAccount;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBoundAccount();
+  }
+
+  Future<void> _checkBoundAccount() async {
+    final bindingService = ref.read(deviceAccountBindingServiceProvider);
+    final bound = await bindingService.getBoundAccount();
+    if (mounted && bound != null) {
+      setState(() {
+        _boundAccount = bound;
+        if (_usernameController.text.trim().isEmpty) {
+          _usernameController.text = bound.displayName;
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -42,6 +63,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final identifier = _usernameController.text.trim();
     final password = _passwordController.text;
+
+    // Check device binding
+    final bindingService = ref.read(deviceAccountBindingServiceProvider);
+    final isAllowed = await bindingService.isIdentifierAllowed(identifier);
+    if (!isAllowed) {
+      final bound = await bindingService.getBoundAccount();
+      final name = bound?.displayName ?? 'another account';
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage =
+            'This device is permanently registered to "$name". Other accounts (including Admin) cannot log in. Reinstall the app to switch accounts.';
+      });
+      return;
+    }
 
     // Centralized online authentication
     final portalResult = await ref
@@ -168,6 +203,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: AppColors.inkPrimary,
                               ),
                             ),
+                            if (_boundAccount != null) ...[
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0284C7).withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.lock_person_rounded,
+                                      color: Color(0xFF0284C7),
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Device Locked to Account',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF0369A1),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _boundAccount!.displayName,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.inkPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Other accounts cannot log in. Reinstall app to change.',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: AppColors.inkSecondary.withValues(alpha: 0.8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 20),
 
                             // Username / Email Field
@@ -316,20 +406,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               alignment: WrapAlignment.spaceBetween,
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF0284C7),
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  onPressed: () => Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const PortalRegisterScreen(),
+                                if (_boundAccount == null)
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFF0284C7),
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
+                                    onPressed: () => Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const PortalRegisterScreen(),
+                                      ),
+                                    ),
+                                    child: const Text('Create Account', style: TextStyle(fontWeight: FontWeight.w600)),
                                   ),
-                                  child: const Text('Create Account', style: TextStyle(fontWeight: FontWeight.w600)),
-                                ),
                                 TextButton(
                                   style: TextButton.styleFrom(
                                     foregroundColor: AppColors.inkSecondary,

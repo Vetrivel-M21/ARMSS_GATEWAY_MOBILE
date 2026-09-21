@@ -42,11 +42,11 @@ Future<String> getCurrentAppVersion() async {
     }
   } catch (_) {}
 
-  return _cachedAppVersion ?? '1.1.4';
+  return _cachedAppVersion ?? '1.1.5';
 }
 
 /// For synchronous compatibility where currentAppVersion is referenced
-String get currentAppVersion => _cachedAppVersion ?? '1.1.4';
+String get currentAppVersion => _cachedAppVersion ?? '1.1.5';
 
 class MobileUpdateInfo {
   final String version;
